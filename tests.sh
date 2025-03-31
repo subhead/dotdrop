@@ -1,57 +1,65 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # author: deadc0de6 (https://github.com/deadc0de6)
 # Copyright (c) 2017, deadc0de6
 
 # stop on first error
-set -ev
+set -eu -o errtrace -o pipefail
 
-# PEP8 tests
-which pycodestyle 2>/dev/null
-[ "$?" != "0" ] && echo "Install pycodestyle" && exit 1
-pycodestyle --ignore=W503,W504,W605 dotdrop/
-pycodestyle tests/
-pycodestyle scripts/
+cur=$(cd "$(dirname "${0}")" && pwd)
+in_cicd="${GITHUB_WORKFLOW:-}"
 
-# pyflakes tests
-pyflakes dotdrop/
-pyflakes tests/
+if [ -n "${in_cicd}" ]; then
+  # patch TERM var in ci/cd
+  if [ -z "${TERM}" ]; then
+    export TERM="linux"
+  fi
+fi
 
-# retrieve the nosetests binary
-set +e
-nosebin="nosetests"
-which ${nosebin} 2>/dev/null
-[ "$?" != "0" ] && nosebin="nosetests3"
-which ${nosebin} 2>/dev/null
-[ "$?" != "0" ] && echo "Install nosetests" && exit 1
-set -e
+# make sure both version.py and manpage dotdrop.1 are in sync
+dotdrop_version=$(grep version dotdrop/version.py | sed 's/^.*= .\(.*\).$/\1/g')
+man_version=$(grep '^\.TH' manpage/dotdrop.1  | sed 's/^.*"dotdrop-\(.*\)\" "Save your.*$/\1/g')
+if [ "${dotdrop_version}" != "${man_version}" ]; then
+  echo "ERROR version.py (${dotdrop_version}) and manpage (${man_version}) differ!"
+  exit 1
+fi
+echo "current dotdrop version ${dotdrop_version}"
 
-# do not print debugs when running tests (faster)
-export DOTDROP_FORCE_NODEBUG=yes
+echo "=> python version:"
+python3 --version
 
-# execute tests with coverage
-PYTHONPATH=dotdrop ${nosebin} -s --with-coverage --cover-package=dotdrop
-#PYTHONPATH=dotdrop python3 -m pytest tests
+# test syntax
+echo "checking syntax..."
+"${cur}"/scripts/check-syntax.sh
 
-## execute bash script tests
-[ "$1" = '--python-only' ] || {
-  log=`mktemp`
-  for scr in tests-ng/*.sh; do
-    ${scr} > "${log}" 2>&1 &
-    tail --pid="$!" -f "${log}"
-    set +e
-    wait "$!"
-    if [ "$?" -ne 0 ]; then
-        echo "Test ${scr} finished with error"
-        rm -f ${log}
-        exit 1
-    elif grep Traceback ${log}; then
-      echo "crash found in logs"
-      rm -f ${log}
-      exit 1
-    fi
-    set -e
-  done
-  rm -f ${log}
-}
+# unittest
+echo "unittest..."
+"${cur}"/scripts/check-unittests.sh
 
-echo "All test finished successfully"
+# tests-ng
+if [ -n "${in_cicd}" ]; then
+  # in CI/CD
+  export DOTDROP_WORKERS=1
+  echo "tests-ng with ${DOTDROP_WORKERS} worker(s)..."
+  "${cur}"/scripts/check-tests-ng.sh
+
+  export DOTDROP_WORKERS=4
+  echo "tests-ng with ${DOTDROP_WORKERS} worker(s)..."
+  "${cur}"/scripts/check-tests-ng.sh
+else
+  echo "tests-ng..."
+  "${cur}"/scripts/check-tests-ng.sh
+fi
+
+# merge coverage
+coverage combine coverages/*
+coverage xml
+
+# test doc
+if [ -z "${in_cicd}" ]; then
+  # not in CI/CD
+  echo "checking documentation..."
+  "${cur}"/scripts/check-doc.sh
+fi
+
+## done
+echo "All tests finished successfully"

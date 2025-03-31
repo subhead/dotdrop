@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # author: deadc0de6
 #
 # update packages
@@ -8,17 +8,17 @@
 up()
 {
   # update pkgver
-  [ "${1}" != "" ] && sed -i "s/^pkgver=.*$/pkgver=${1}/g" ${pkgfile}
+  [ "${1}" != "" ] && sed -i "s/^pkgver=.*$/pkgver=${1}/g" "${pkgfile}"
   # create srcinfo
   rm -f .SRCINFO
   makepkg --printsrcinfo > .SRCINFO
 }
 
 # pivot
-cur=$(dirname "$(readlink -f "${0}")")
-opwd=`pwd`
+cur=$(cd "$(dirname "${0}")" && pwd)
+opwd=$(pwd)
 pkgfile="PKGBUILD"
-cd ${cur}
+cd "${cur}" || exit 1
 
 ########################
 # update arch package
@@ -26,10 +26,10 @@ cd ${cur}
 ########################
 dir="arch-dotdrop"
 echo "doing ${dir} ..."
-cd ${dir}
-version="`git describe --abbrev=0 --tags | sed 's/^v//g'`"
-up ${version}
-cd ${OLDPWD}
+cd ${dir} || exit 1
+version="$(git describe --abbrev=0 --tags | sed 's/^v//g')"
+up "${version}"
+cd "${OLDPWD}" || exit 1
 
 #########################
 ## update arch package
@@ -44,4 +44,4 @@ cd ${OLDPWD}
 #cd ${OLDPWD}
 
 # pivot back
-cd ${opwd}
+cd "${opwd}" || exit

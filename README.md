@@ -1,48 +1,60 @@
-# DOTDROP
+# <img src="https://raw.githubusercontent.com/deadc0de6/dotdrop/master/assets/dotdrop.svg" width="100" height="100" align="left"> dotdrop
+<br/>
+<br/>
 
-[![Build Status](https://travis-ci.org/deadc0de6/dotdrop.svg?branch=master)](https://travis-ci.org/deadc0de6/dotdrop)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/deadc0de6/dotdrop)](https://github.com/deadc0de6/dotdrop/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
-[![Coverage Status](https://coveralls.io/repos/github/deadc0de6/dotdrop/badge.svg?branch=master)](https://coveralls.io/github/deadc0de6/dotdrop?branch=master)
-[![PyPI version](https://badge.fury.io/py/dotdrop.svg)](https://badge.fury.io/py/dotdrop)
-[![AUR](https://img.shields.io/aur/version/dotdrop.svg)](https://aur.archlinux.org/packages/dotdrop)
+
+[![Tests Status](https://github.com/deadc0de6/dotdrop/workflows/tests/badge.svg?branch=master)](https://github.com/deadc0de6/dotdrop/actions)
+[![Doc Status](https://readthedocs.org/projects/dotdrop/badge/?version=latest)](https://dotdrop.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/github/deadc0de6/dotdrop/graph/badge.svg?token=SscGyrtgYL)](https://codecov.io/github/deadc0de6/dotdrop)
+![CodeQL](https://github.com/deadc0de6/dotdrop/workflows/CodeQL/badge.svg)
+
 [![Python](https://img.shields.io/pypi/pyversions/dotdrop.svg)](https://pypi.python.org/pypi/dotdrop)
+
+[![PyPI](https://img.shields.io/pypi/v/dotdrop)](https://badge.fury.io/py/dotdrop)
+[![Homebrew version](https://img.shields.io/homebrew/v/dotdrop)](https://formulae.brew.sh/formula/dotdrop)
+[![AUR](https://img.shields.io/aur/version/dotdrop.svg)](https://aur.archlinux.org/packages/dotdrop)
+[![Snap](https://badgen.net/snapcraft/v/dotdrop)](https://snapcraft.io/dotdrop)
+
+[![Donate](https://img.shields.io/badge/donate-KoFi-blue.svg)](https://ko-fi.com/deadc0de6)
 
 *Save your dotfiles once, deploy them everywhere*
 
 [Dotdrop](https://github.com/deadc0de6/dotdrop) makes the management of dotfiles between different hosts easy.
-It allows to store your dotfiles on git and automagically deploy
+It allows you to store your dotfiles in Git and automagically deploy
 different versions of the same file on different setups.
 
 It also allows to manage different *sets* of dotfiles.
-For example you can have a set of dotfiles for your home laptop and
-a different set for your office desktop. Those sets may overlap and different
-versions of the same dotfiles can be deployed on different predefined *profiles*.
+For example, you can have a set of dotfiles for your home laptop and
+a different set for your office desktop. Those sets may overlap, and different
+versions of the same dotfiles can be deployed using different predefined *profiles*.
 Or you may have a main set of dotfiles for your
-everyday's host and a sub-set you only need to deploy to temporary
-hosts (cloud VM, etc) that may be using
+everyday host and a subset you only need to deploy to temporary
+hosts (cloud VM etc.) that may be using
 a slightly different version of some of the dotfiles.
 
 Features:
 
-* Sync once every dotfile on git for different usages
-* Allow dotfiles templating by leveraging [jinja2](http://jinja.pocoo.org/)
+* Sync once every dotfile in Git for different usages
+* Allow dotfile templating
 * Dynamically generated dotfile contents with pre-defined variables
 * Comparison between deployed and stored dotfiles
 * Handling multiple profiles with different sets of dotfiles
-* Easy import and update dotfiles
+* Easily import and update dotfiles
 * Handle files and directories
-* Support symlink of dotfiles
+* Support symlinking of dotfiles
 * Associate actions to the deployment of specific dotfiles
 * Associate transformations for storing encrypted/compressed dotfiles
 * Provide solutions for handling dotfiles containing sensitive information
 
-Check also the [blog post](https://deadc0de.re/articles/dotfiles.html),
-the [example](#getting-started), the [wiki](https://github.com/deadc0de6/dotdrop/wiki) or
-how [people are using dotdrop](https://github.com/deadc0de6/dotdrop/wiki/people-using-dotdrop)
+Check the [example](#getting-started), the [documentation](https://dotdrop.readthedocs.io/) or
+how [people are using dotdrop](https://dotdrop.readthedocs.io/en/latest/misc/people-using-dotdrop/)
 for more.
 
 Quick start:
 ```bash
+## using dotdrop as a submodule
 mkdir dotfiles && cd dotfiles
 git init
 git submodule add https://github.com/deadc0de6/dotdrop.git
@@ -51,16 +63,14 @@ pip3 install -r dotdrop/requirements.txt --user
 ./dotdrop.sh --help
 ```
 
-A mirror of this repository is available on gitlab under <https://gitlab.com/deadc0de6/dotdrop>.
+## Why dotdrop?
 
-## Why dotdrop ?
-
-There exist many tools to manage dotfiles however not
+There exist many tools to manage dotfiles; however, not
 many allow to deploy different versions of the same dotfile
-on different hosts. Moreover dotdrop allows to specify the
-set of dotfiles that need to be deployed on a specific profile.
+on different hosts. Moreover, dotdrop allows to specify the
+set of dotfiles that need to be deployed for a specific profile.
 
-See the [example](#getting-started) for a concrete example on
+See the [example](#getting-started) for a concrete example of
 why [dotdrop](https://github.com/deadc0de6/dotdrop) rocks.
 
 ---
@@ -74,79 +84,41 @@ why [dotdrop](https://github.com/deadc0de6/dotdrop) rocks.
 
 # Installation
 
-There are multiple ways to install and use dotdrop.
-It is recommended to install dotdrop [as a submodule](#as-a-submodule)
-to your dotfiles git tree. Having dotdrop as a submodule guarantees that anywhere
-you are cloning your dotfiles git tree from you'll have dotdrop shipped with it.
+See the [installation instructions](https://dotdrop.readthedocs.io/en/latest/installation/).
 
-Below instructions show how to install dotdrop as a submodule. For alternative
-installation instructions (with virtualenv, pypi, aur, snap, etc) see the
-[wiki installation page](https://github.com/deadc0de6/dotdrop/wiki/installation).
+Dotdrop is available on:
 
-Dotdrop is also available on
-* pypi: https://pypi.org/project/dotdrop/
-* aur (stable): https://aur.archlinux.org/packages/dotdrop/
-* aur (git version): https://aur.archlinux.org/packages/dotdrop-git/
-* snapcraft: https://snapcraft.io/dotdrop
-
-## As a submodule
-
-The following will create a git repository for your dotfiles and
-keep dotdrop as a submodule:
-```bash
-## create the repository
-$ mkdir dotfiles; cd dotfiles
-$ git init
-
-## install dotdrop as a submodule
-$ git submodule add https://github.com/deadc0de6/dotdrop.git
-$ pip3 install -r dotdrop/requirements.txt --user
-$ ./dotdrop/bootstrap.sh
-
-## use dotdrop
-$ ./dotdrop.sh --help
-```
-
-For MacOS users, make sure to install `realpath` through homebrew
-(part of *coreutils*).
-
-Using dotdrop as a submodule will need you to work with dotdrop by
-using the generated script `dotdrop.sh` at the root
-of your dotfiles repository. Note that this script updates the submodule
-automatically, unless called with the environment variable `DOTDROP_AUTOUPDATE`
-set to `no`.
-
-To ease the use of dotdrop, it is recommended to add an alias to it in your
-shell (*~/.bashrc*, *~/.zshrc*, etc) with the config file path, for example
-```
-alias dotdrop='<absolute-path-to-dotdrop.sh> --cfg=<path-to-your-config.yaml>'
-```
-
-For bash and zsh completion scripts see [the related doc](completion/README.md).
+* [PyPI](https://pypi.org/project/dotdrop/)
+* [Homebrew](https://formulae.brew.sh/formula/dotdrop)
+* [AUR (stable)](https://aur.archlinux.org/packages/dotdrop/)
+* [AUR (git version)](https://aur.archlinux.org/packages/dotdrop-git/)
+* [Snapcraft](https://snapcraft.io/dotdrop)
+* [Pacstall](https://github.com/pacstall/pacstall-programs/blob/master/packages/dotdrop/dotdrop.pacscript)
 
 # Getting started
 
-Create a new repository to store your dotfiles with dotdrop. *Init* or *clone*
-that new repository and
-[install dotdrop](https://github.com/deadc0de6/dotdrop/wiki/installation#as-a-submodule).
+[Create a new repository](https://dotdrop.readthedocs.io/en/latest/getting-started/#repository-setup)
+to store your dotfiles with dotdrop. *Init* or *clone* that new repository,
+[install dotdrop](https://dotdrop.readthedocs.io/en/latest/installation/) and
+generate a default config file [generate config file](https://dotdrop.readthedocs.io/en/latest/usage/#generate-a-default-config)
 
 Then import any dotfiles (files or directories) you want to manage with dotdrop.
 You can either use the default profile (which resolves to the *hostname* of the host
-your running dotdrop on) or provide it specifically using the switch `-p --profile`.
+you are running dotdrop on) or provide it explicitly using the switch `-p`/`--profile`.
 
-Import dotfiles on host *home*
+Import dotfiles on host *home*:
 ```bash
 $ dotdrop import ~/.vimrc ~/.xinitrc ~/.config/polybar
 ```
 
 Dotdrop does two things:
 
-* Copy the dotfiles in the *dotpath* directory
+* Copy the dotfiles to the *dotpath* directory
   (defined in `config.yaml`, defaults to *dotfiles*)
 * Create the associated entries in the `config.yaml` file
-  (in `dotfiles` and in `profiles`)
+  (in the `dotfiles` and `profiles` entries)
 
-Your config file will look something similar to this
+Your config file will look like something similar to this:
 ```yaml
 config:
   backup: true
@@ -176,21 +148,21 @@ profiles:
     - d_polybar
 ```
 For a description of the different fields and their use,
-see the [config doc](https://github.com/deadc0de6/dotdrop/wiki/config).
+see the [config doc](https://dotdrop.readthedocs.io/en/latest/config/config-config/).
 
-Commit and push your changes.
+Commit and push your changes with git.
 
 Then go to another host where your dotfiles need to be managed as well,
-clone the previously setup repository
+clone the previously set up repository,
 and compare the local dotfiles with the ones stored in dotdrop:
 ```bash
 $ dotdrop compare --profile=home
 ```
 
-Now you might want to adapt the `config.yaml` file to your likings on
-that second host. Let's say for example that you only want `d_polybar` and
+Now you might want to adapt the `config.yaml` file to your liking on
+that second host. Let's say, for example, that you only want `d_polybar` and
 `f_xinitrc` to be deployed on that second host. You would then change your config
-to something like this (considering that second host's hostname is *office*):
+to something like this (assuming that the second host's hostname is *office*):
 ```yaml
 …
 profiles:
@@ -205,11 +177,10 @@ profiles:
     - d_polybar
 ```
 
-Then adapt any dotfile using the [templating](https://github.com/deadc0de6/dotdrop/wiki/templating)
-feature (if needed). For example you might want different fonts sizes on polybar for the different
-hosts:
+Then adapt any dotfile using the [templating](https://dotdrop.readthedocs.io/en/latest/template/templating/)
+feature (if needed). For example, you might want different fonts sizes in Polybar for each host.
 
-edit `<dotpath>/config/polybar/config`
+Edit `<dotpath>/config/polybar/config`:
 ```bash
 …
 {%@@ if profile == "home" @@%}
@@ -222,11 +193,44 @@ font2 = "unifont:size=6;0"
 …
 ```
 
-Also the home computer is running [awesomeWM](https://awesomewm.org/)
+You also want to have the correct interface set on the wireless network in
+the Polybar config.
+
+Add a [variable](https://dotdrop.readthedocs.io/en/latest/config/config-variables/)
+to the config file (In the below example, *home* gets the default `wlan0` value for
+the variable `wifi` while *office* gets `wlp2s0`):
+```yaml
+…
+variables:
+  wifi: "wlan0"
+…
+profiles:
+  home:
+    dotfiles:
+    - f_vimrc
+    - f_xinitrc
+    - d_polybar
+  office:
+    dotfiles:
+    - f_xinitrc
+    - d_polybar
+    variables:
+      wifi: "wlp2s0"
+```
+
+Then you can adapt the Polybar config file so that the
+variable `wifi` gets correctly replaced during installation:
+```bash
+[module/wireless-network]
+type = internal/network
+interface = {{@@ wifi @@}}
+```
+
+Also, the home computer is running [awesomeWM](https://awesomewm.org/),
 and the office computer [bspwm](https://github.com/baskerville/bspwm).
 The `~/.xinitrc` file will therefore be different while still sharing some lines.
 
-edit `<dotpath>/xinitrc`
+Edit `<dotpath>/xinitrc`:
 ```bash
 #!/bin/bash
 
@@ -244,38 +248,55 @@ exec bspwm
 {%@@ endif @@%}
 ```
 
-The *if branch* on above template examples will define
-which part is deployed based on the
-hostname of the host on which dotdrop is run from.
-(or the selected profile).
+Finally you want everything installed with the *office* profile
+to be logged; you thus add an action to the config file:
+```yaml
+…
+actions:
+  loginstall: "echo {{@@ _dotfile_abs_src @@}} installed to {{@@ _dotfile_abs_dst @@}} >> {0}"
+…
+profiles:
+  home:
+    dotfiles:
+    - f_vimrc
+    - f_xinitrc
+    - d_polybar
+  office:
+    dotfiles:
+    - f_xinitrc
+    - d_polybar
+    variables:
+      wifi: "wlp2s0"
+    actions:
+      - loginstall "/tmp/dotdrop-installation.log"
+```
 
-When done, you can install your dotfiles using
+When done, you can install your dotfiles using:
 ```bash
 $ dotdrop install
 ```
+
 If you are unsure, you can always run `dotdrop compare` to see
 how your local dotfiles would be updated by dotdrop before running
-`install` or run install with `--dry`.
+`install` or you could run install with `--dry`.
 
 That's it, a single repository with all your dotfiles for your different hosts.
 
-You can then
+For more, see the [docs](https://dotdrop.readthedocs.io):
 
-* [create actions](https://github.com/deadc0de6/dotdrop/wiki/usage-actions)
-* [use transformations](https://github.com/deadc0de6/dotdrop/wiki/usage-transformations)
-* [use variables](https://github.com/deadc0de6/dotdrop/wiki/config-variables)
-* [symlink dotfiles](https://github.com/deadc0de6/dotdrop/wiki/symlinked-dotfiles)
-* [and more](https://github.com/deadc0de6/dotdrop/wiki)
-
-For more options see `dotdrop --help` and the [wiki](https://github.com/deadc0de6/dotdrop/wiki).
+* [Create actions](https://dotdrop.readthedocs.io/en/latest/config/config-actions/)
+* [Use transformations](https://dotdrop.readthedocs.io/en/latest/config/config-transformations/)
+* [Use variables](https://dotdrop.readthedocs.io/en/latest/config/config-variables/)
+* [Symlink dotfiles](https://dotdrop.readthedocs.io/en/latest/howto/symlink-dotfiles/)
+* [and more](https://dotdrop.readthedocs.io/en/latest/howto/howto/)
 
 # Documentation
 
-Dotdrop's documentation is hosted on [its wiki](https://github.com/deadc0de6/dotdrop/wiki).
+Dotdrop's documentation is hosted on [Read the Docs](https://dotdrop.readthedocs.io/en/latest/).
 
 # Thank you
 
-If you like dotdrop, <a href='https://ko-fi.com/I2I2ZZT4' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi1.png?v=2' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+If you like dotdrop, [buy me a coffee](https://ko-fi.com/deadc0de6).
 
 # Contribution
 
@@ -284,7 +305,7 @@ If you are having trouble installing or using dotdrop,
 
 If you want to contribute, feel free to do a PR (please follow PEP8).
 Have a look at the
-[contribution guidelines](https://github.com/deadc0de6/dotdrop/blob/master/CONTRIBUTING.md)
+[contribution guidelines](https://github.com/deadc0de6/dotdrop/blob/master/CONTRIBUTING.md).
 
 # License
 

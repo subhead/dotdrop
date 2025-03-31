@@ -6,57 +6,43 @@
 # returns 1 in case of error
 #
 
-# exit on first error
-set -e
-
-# all this crap to get current path
-rl="readlink -f"
-if ! ${rl} "${0}" >/dev/null 2>&1; then
-  rl="realpath"
-
-  if ! hash ${rl}; then
-    echo "\"${rl}\" not found !" && exit 1
-  fi
-fi
-cur=$(dirname "$(${rl} "${0}")")
-
-#hash dotdrop >/dev/null 2>&1
-#[ "$?" != "0" ] && echo "install dotdrop to run tests" && exit 1
-
-#echo "called with ${1}"
-
-# dotdrop path can be pass as argument
+## start-cookie
+set -eu -o errtrace -o pipefail
+cur=$(cd "$(dirname "${0}")" && pwd)
 ddpath="${cur}/../"
-[ "${1}" != "" ] && ddpath="${1}"
-[ ! -d ${ddpath} ] && echo "ddpath \"${ddpath}\" is not a directory" && exit 1
-
-export PYTHONPATH="${ddpath}:${PYTHONPATH}"
-bin="python3 -m dotdrop.dotdrop"
-
-echo "dotdrop path: ${ddpath}"
-echo "pythonpath: ${PYTHONPATH}"
-
-# get the helpers
-source ${cur}/helpers
-
-echo -e "$(tput setaf 6)==> RUNNING $(basename $BASH_SOURCE) <==$(tput sgr0)"
+PPATH="{PYTHONPATH:-}"
+export PYTHONPATH="${ddpath}:${PPATH}"
+altbin="python3 -m dotdrop.dotdrop"
+if hash coverage 2>/dev/null; then
+  mkdir -p coverages/
+  altbin="coverage run -p --data-file coverages/coverage --source=dotdrop -m dotdrop.dotdrop"
+fi
+bin="${DT_BIN:-${altbin}}"
+# shellcheck source=tests-ng/helpers
+source "${cur}"/helpers
+echo -e "$(tput setaf 6)==> RUNNING $(basename "${BASH_SOURCE[0]}") <==$(tput sgr0)"
+## end-cookie
 
 ################################################################
 # this is the test
 ################################################################
 
 # the action temp
-tmpa=`mktemp -d --suffix='-dotdrop-tests' || mktemp -d`
+tmpa=$(mktemp -d --suffix='-dotdrop-tests' || mktemp -d)
 # the dotfile source
-tmps=`mktemp -d --suffix='-dotdrop-tests' || mktemp -d`
-mkdir -p ${tmps}/dotfiles
+tmps=$(mktemp -d --suffix='-dotdrop-tests' || mktemp -d)
+mkdir -p "${tmps}"/dotfiles
 # the dotfile destination
-tmpd=`mktemp -d --suffix='-dotdrop-tests' || mktemp -d`
+tmpd=$(mktemp -d --suffix='-dotdrop-tests' || mktemp -d)
+
+clear_on_exit "${tmps}"
+clear_on_exit "${tmpd}"
+clear_on_exit "${tmpa}"
 
 # create the config file
 cfg="${tmps}/config.yaml"
 
-cat > ${cfg} << _EOF
+cat > "${cfg}" << _EOF
 variables:
   var1: "var1"
   var2: "{{@@ var1 @@}} var2"
@@ -99,28 +85,25 @@ _EOF
 #cat ${cfg}
 
 # create the dotfile
-echo "test" > ${tmps}/dotfiles/abc
+echo "test" > "${tmps}"/dotfiles/abc
 
 # install
-cd ${ddpath} | ${bin} install -f -c ${cfg} -p p1 --verbose
+cd "${ddpath}" | ${bin} install -f -c "${cfg}" -p p1 --verbose
 
 # checks
-[ ! -e ${tmpa}/preaction1 ] && exit 1
-[ ! -e ${tmpa}/preaction2 ] && exit 1
-[ ! -e ${tmpa}/postaction1 ] && exit 1
-[ ! -e ${tmpa}/postaction2 ] && exit 1
-[ ! -e ${tmpa}/naked1 ] && exit 1
-[ ! -e ${tmpa}/naked2 ] && exit 1
+[ ! -e "${tmpa}"/preaction1 ] && exit 1
+[ ! -e "${tmpa}"/preaction2 ] && exit 1
+[ ! -e "${tmpa}"/postaction1 ] && exit 1
+[ ! -e "${tmpa}"/postaction2 ] && exit 1
+[ ! -e "${tmpa}"/naked1 ] && exit 1
+[ ! -e "${tmpa}"/naked2 ] && exit 1
 
-grep 'var1 var2 var3' ${tmpa}/preaction1 >/dev/null
-grep 'dvar1 dvar2 dvar3' ${tmpa}/preaction2 >/dev/null
-grep 'var1 var2 var3' ${tmpa}/postaction1 >/dev/null
-grep 'dvar1 dvar2 dvar3' ${tmpa}/postaction2 >/dev/null
-grep 'var1 var2 var3' ${tmpa}/naked1 >/dev/null
-grep 'dvar1 dvar2 dvar3' ${tmpa}/naked2 >/dev/null
-
-## CLEANING
-rm -rf ${tmps} ${tmpd} ${tmpa}
+grep 'var1 var2 var3' "${tmpa}"/preaction1 >/dev/null
+grep 'dvar1 dvar2 dvar3' "${tmpa}"/preaction2 >/dev/null
+grep 'var1 var2 var3' "${tmpa}"/postaction1 >/dev/null
+grep 'dvar1 dvar2 dvar3' "${tmpa}"/postaction2 >/dev/null
+grep 'var1 var2 var3' "${tmpa}"/naked1 >/dev/null
+grep 'dvar1 dvar2 dvar3' "${tmpa}"/naked2 >/dev/null
 
 echo "OK"
 exit 0

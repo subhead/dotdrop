@@ -4,53 +4,38 @@
 #
 # test minversion
 
-# exit on first error
-set -e
-
-# all this crap to get current path
-rl="readlink -f"
-if ! ${rl} "${0}" >/dev/null 2>&1; then
-  rl="realpath"
-
-  if ! hash ${rl}; then
-    echo "\"${rl}\" not found !" && exit 1
-  fi
-fi
-cur=$(dirname "$(${rl} "${0}")")
-
-#hash dotdrop >/dev/null 2>&1
-#[ "$?" != "0" ] && echo "install dotdrop to run tests" && exit 1
-
-#echo "called with ${1}"
-
-# dotdrop path can be pass as argument
+## start-cookie
+set -eu -o errtrace -o pipefail
+cur=$(cd "$(dirname "${0}")" && pwd)
 ddpath="${cur}/../"
-[ "${1}" != "" ] && ddpath="${1}"
-[ ! -d ${ddpath} ] && echo "ddpath \"${ddpath}\" is not a directory" && exit 1
-
-export PYTHONPATH="${ddpath}:${PYTHONPATH}"
-bin="python3 -m dotdrop.dotdrop"
-
-echo "dotdrop path: ${ddpath}"
-echo "pythonpath: ${PYTHONPATH}"
-
-# get the helpers
-source ${cur}/helpers
-
-echo -e "$(tput setaf 6)==> RUNNING $(basename $BASH_SOURCE) <==$(tput sgr0)"
+PPATH="{PYTHONPATH:-}"
+export PYTHONPATH="${ddpath}:${PPATH}"
+altbin="python3 -m dotdrop.dotdrop"
+if hash coverage 2>/dev/null; then
+  mkdir -p coverages/
+  altbin="coverage run -p --data-file coverages/coverage --source=dotdrop -m dotdrop.dotdrop"
+fi
+bin="${DT_BIN:-${altbin}}"
+# shellcheck source=tests-ng/helpers
+source "${cur}"/helpers
+echo -e "$(tput setaf 6)==> RUNNING $(basename "${BASH_SOURCE[0]}") <==$(tput sgr0)"
+## end-cookie
 
 ################################################################
 # this is the test
 ################################################################
 
 # the dotfile source
-tmps=`mktemp -d --suffix='-dotdrop-tests' || mktemp -d`
-mkdir -p ${tmps}/dotfiles
+tmps=$(mktemp -d --suffix='-dotdrop-tests' || mktemp -d)
+mkdir -p "${tmps}"/dotfiles
 # the dotfile destination
-tmpd=`mktemp -d --suffix='-dotdrop-tests' || mktemp -d`
+tmpd=$(mktemp -d --suffix='-dotdrop-tests' || mktemp -d)
+
+clear_on_exit "${tmps}"
+clear_on_exit "${tmpd}"
 
 cfg="${tmps}/config.yaml"
-cat > ${cfg} << _EOF
+cat > "${cfg}" << _EOF
 config:
   backup: true
   create: true
@@ -67,20 +52,20 @@ profiles:
 _EOF
 
 # create the source
-mkdir -p ${tmps}/dotfiles/
-echo "abc" > ${tmps}/dotfiles/abc
-ln -s ${tmps}/dotfiles/abc ${tmpd}/abc
+mkdir -p "${tmps}"/dotfiles/
+echo "abc" > "${tmps}"/dotfiles/abc
+ln -s "${tmps}"/dotfiles/abc "${tmpd}"/abc
 
 # compare
-cd ${ddpath} | ${bin} compare -c ${cfg} -p p1 -V
+cd "${ddpath}" | ${bin} compare -c "${cfg}" -p p1 -V
 
 # ensure minversion is present
-cat ${cfg}
-grep 'link: link' ${cfg}
-grep 'minversion' ${cfg}
+cat "${cfg}"
+grep 'link: absolute' "${cfg}"
+grep 'minversion' "${cfg}"
 
 # fake a higher version
-cat > ${cfg} << _EOF
+cat > "${cfg}" << _EOF
 config:
   backup: true
   create: true
@@ -99,12 +84,12 @@ _EOF
 
 # compare
 set +e
-cd ${ddpath} | ${bin} compare -c ${cfg} -p p1 -V
+cd "${ddpath}" | ${bin} compare -c "${cfg}" -p p1 -V
 [ "$?" != "1" ] && echo "minversion not working" && exit 1
 set -e
 
 # all clean
-cat > ${cfg} << _EOF
+cat > "${cfg}" << _EOF
 config:
   backup: true
   create: true
@@ -120,14 +105,11 @@ profiles:
 _EOF
 
 # compare
-cd ${ddpath} | ${bin} compare -c ${cfg} -p p1 -V
+cd "${ddpath}" | ${bin} compare -c "${cfg}" -p p1 -V
 
 # test
-cat ${cfg}
-grep 'minversion' ${cfg} && echo "minversion added, not needed" && exit 1
-
-## CLEANING
-rm -rf ${tmps} ${tmpd}
+cat "${cfg}"
+grep 'minversion' "${cfg}" && echo "minversion added, not needed" && exit 1
 
 echo "OK"
 exit 0

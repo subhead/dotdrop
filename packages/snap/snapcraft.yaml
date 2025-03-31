@@ -1,6 +1,6 @@
 name:           dotdrop
-version:        latest
-version-script: cat $SNAPCRAFT_STAGE/bin/dotdrop | grep '__requires__' | sed "s/.*'dotdrop==\(.*\)'/\1/"
+base:           core20
+adopt-info:     version
 summary:        Save your dotfiles once, deploy them everywhere
 description: |
   Dotdrop makes the management of dotfiles between different hosts easy.
@@ -24,14 +24,26 @@ grade:          stable
 
 apps:
   dotdrop:
-    command:    dotdrop
+    command:    bin/dotdrop
     plugs:
       - home
 
 parts:
   dotdrop:
     plugin:     python
-    python-version: python3
     source: ../../
     stage-packages:
       - file
+  version:
+    source: .
+    plugin: nil
+    override-build: |
+      VERSION=""
+      if [ hash git &>/dev/null ]; then
+        VERSION=$(git describe --abbrev=0 --tags | sed 's/^v//g')
+      fi
+      if [ -z ${VERSION} ]; then
+        VERSION=$(cat dotdrop/version.py | grep version | sed 's/^.*= .\(.*\).$/\1/g')
+      fi
+      [ -z "${VERSION}" ] && exit 1
+      snapcraftctl set-version "${VERSION}"

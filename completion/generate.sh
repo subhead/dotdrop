@@ -5,7 +5,7 @@
 # pip3 install --user infi.docopt_completion
 #
 
-set -e
+set -eu -o errtrace -o pipefail
 
 bin="docopt-completion"
 if ! hash ${bin}; then
@@ -13,17 +13,7 @@ if ! hash ${bin}; then
   exit 1
 fi
 
-rl="readlink -f"
-if ! ${rl} "${0}" >/dev/null 2>&1; then
-  rl="realpath"
-
-  if ! hash ${rl}; then
-    echo "\"${rl}\" not found!"
-    exit 1
-  fi
-fi
-
-cur=$(dirname "$(${rl} "${0}")")
+cur=$(cd "$(dirname "${0}")" && pwd)
 opwd=$(pwd)
 
 # output files
@@ -34,11 +24,11 @@ dt_zsh="${compl}/_dotdrop-completion.zsh"
 dt_bash="${compl}/dotdrop-completion.bash"
 
 # generate for dotdrop.sh
-cd ${cur}/..
+cd "${cur}"/..
 docopt-completion ./dotdrop.sh --manual-zsh
-mv ./_dotdrop.sh ${dtsh_zsh}
+mv ./_dotdrop.sh "${dtsh_zsh}"
 docopt-completion ./dotdrop.sh --manual-bash
-mv ./dotdrop.sh.sh ${dtsh_bash}
+mv ./dotdrop.sh.sh "${dtsh_bash}"
 
 # generate for dotdrop
 vbin="virtualenv"
@@ -46,18 +36,19 @@ if ! hash ${vbin}; then
   echo "\"${vbin}\" not found!"
   exit 1
 fi
-cd ${cur}/..
+cd "${cur}"/..
 venv="/tmp/dotdrop-venv"
 ${vbin} -p python3 ${venv}
+# shellcheck source=/dev/null
 source ${venv}/bin/activate
 python setup.py install
 cd /tmp
 docopt-completion dotdrop --manual-zsh
-mv ./_dotdrop ${dt_zsh}
+mv ./_dotdrop "${dt_zsh}"
 docopt-completion dotdrop --manual-bash
-mv ./dotdrop.sh ${dt_bash}
+mv ./dotdrop.sh "${dt_bash}"
 deactivate
 rm -rf ${venv}
 
 # pivot back
-cd ${opwd}
+cd "${opwd}"

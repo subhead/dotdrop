@@ -8,4 +8,19 @@ diverse exceptions
 
 class YamlException(Exception):
     """exception in CfgYaml"""
-    pass
+
+
+class ConfigException(Exception):
+    """exception in config parsing/aggregation"""
+
+
+class OptionsException(Exception):
+    """dotdrop options exception"""
+
+
+class UndefinedException(Exception):
+    """exception in templating"""
+
+
+class UnmetDependency(Exception):
+    """unmet dependency"""

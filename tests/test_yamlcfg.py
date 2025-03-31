@@ -12,16 +12,19 @@ import os
 from dotdrop.cfg_yaml import CfgYaml as Cfg
 from dotdrop.options import Options
 from dotdrop.linktypes import LinkTypes
+from dotdrop.exceptions import YamlException
 from tests.helpers import (SubsetTestCase, _fake_args, clean,
                            create_fake_config, create_yaml_keyval, get_tempdir,
                            populate_fake_config, yaml_load, yaml_dump)
 
 
 class TestConfig(SubsetTestCase):
+    """test case"""
 
     CONFIG_BACKUP = False
     CONFIG_CREATE = True
     CONFIG_DOTPATH = 'dotfiles'
+    PROFILE = 'p1'
     TMPSUFFIX = '.dotdrop'
     CONFIG_NAME = 'config.yaml'
     CONFIG_NAME_2 = 'config-2.yaml'
@@ -37,7 +40,7 @@ class TestConfig(SubsetTestCase):
                                       dotpath=self.CONFIG_DOTPATH,
                                       backup=self.CONFIG_BACKUP,
                                       create=self.CONFIG_CREATE)
-        conf = Cfg(confpath, debug=True)
+        conf = Cfg(confpath, self.PROFILE, debug=True)
         self.assertTrue(conf is not None)
 
         opts = conf.settings
@@ -49,18 +52,43 @@ class TestConfig(SubsetTestCase):
         self.assertTrue(dpath == self.CONFIG_DOTPATH)
         self.assertTrue(conf.dump() != '')
 
+    def test_raises(self):
+        """test raises on not existing path"""
+        with self.assertRaises(YamlException):
+            Cfg('path', debug=True)
+
+    def test_resolve_link(self):
+        """test bad link value"""
+        tmp = get_tempdir()
+        self.assertTrue(os.path.exists(tmp))
+        self.addCleanup(clean, tmp)
+        confpath = create_fake_config(tmp,
+                                      configname=self.CONFIG_NAME,
+                                      dotpath=self.CONFIG_DOTPATH,
+                                      backup=self.CONFIG_BACKUP,
+                                      create=self.CONFIG_CREATE)
+        cfg = Cfg(confpath, debug=True)
+        with self.assertRaises(YamlException):
+            # pylint: disable=W0212
+            cfg._resolve_dotfile_link('fake')
+
     def test_def_link(self):
-        self._test_link_import('nolink', LinkTypes.LINK, 'link')
+        """unittest"""
+        # pylint: disable=E1120
+        self._test_link_import('nolink', LinkTypes.ABSOLUTE, 'absolute')
+        self._test_link_import('nolink', LinkTypes.RELATIVE, 'relative')
         self._test_link_import('nolink', LinkTypes.NOLINK, 'nolink')
         self._test_link_import('nolink',
                                LinkTypes.LINK_CHILDREN,
                                'link_children')
-        self._test_link_import('link', LinkTypes.LINK, 'link')
+        self._test_link_import('link', LinkTypes.ABSOLUTE, 'absolute')
+        self._test_link_import('link', LinkTypes.RELATIVE, 'relative')
         self._test_link_import('link', LinkTypes.NOLINK, 'nolink')
         self._test_link_import('link',
                                LinkTypes.LINK_CHILDREN,
                                'link_children')
-        self._test_link_import('link_children', LinkTypes.LINK, 'link')
+        self._test_link_import('link_children', LinkTypes.ABSOLUTE, 'absolute')
+        self._test_link_import('link_children', LinkTypes.RELATIVE, 'relative')
         self._test_link_import('link_children', LinkTypes.NOLINK, 'nolink')
         self._test_link_import('link_children', LinkTypes.LINK_CHILDREN,
                                'link_children')
@@ -70,7 +98,7 @@ class TestConfig(SubsetTestCase):
     @patch('dotdrop.cfg_yaml.os.path.exists', create=True)
     def _test_link_import(self, cfgstring, expected,
                           cliargs, mock_exists, mock_open):
-        data = '''
+        data = f'''
 config:
   backup: true
   create: true
@@ -78,30 +106,31 @@ config:
   banner: true
   longkey: false
   keepdot: false
-  link_on_import: {}
+  link_on_import: {cfgstring}
   link_dotfile_default: nolink
 dotfiles:
 profiles:
-        '''.format(cfgstring)
+        '''
 
         mock_open.side_effect = [
+                unittest.mock.mock_open(read_data=data).return_value,
                 unittest.mock.mock_open(read_data=data).return_value
                 ]
         mock_exists.return_value = True
 
         args = _fake_args()
-        args['--profile'] = 'p1'
+        args['--profile'] = self.PROFILE
         args['--cfg'] = 'mocked'
         args['--link'] = cliargs
         args['--verbose'] = True
-        o = Options(args=args)
+        opt = Options(args=args)
 
-        self.assertTrue(o.import_link == expected)
+        self.assertTrue(opt.import_link == expected)
 
     @patch('dotdrop.cfg_yaml.open', create=True)
     @patch('dotdrop.cfg_yaml.os.path.exists', create=True)
     def _test_link_import_fail(self, value, mock_exists, mock_open):
-        data = '''
+        data = f'''
 config:
   backup: true
   create: true
@@ -109,11 +138,11 @@ config:
   banner: true
   longkey: false
   keepdot: false
-  link_on_import: {}
+  link_on_import: {value}
   link_dotfile_default: nolink
 dotfiles:
 profiles:
-        '''.format(value)
+        '''
 
         mock_open.side_effect = [
                 unittest.mock.mock_open(read_data=data).return_value
@@ -125,11 +154,12 @@ profiles:
         args['--cfg'] = 'mocked'
         args['--verbose'] = True
 
-        with self.assertRaises(ValueError):
-            o = Options(args=args)
-            print(o.import_link)
+        with self.assertRaises(YamlException):
+            opt = Options(args=args)
+            print(opt.import_link)
 
     def test_include(self):
+        """unittest"""
         tmp = get_tempdir()
         self.assertTrue(os.path.exists(tmp))
         self.addCleanup(clean, tmp)
@@ -268,10 +298,10 @@ profiles:
                 },
                 'a_log_ed': 'echo 2',
             },
-            'trans': {
+            'trans_install': {
                 't_log_ed': 'echo 3',
             },
-            'trans_write': {
+            'trans_update': {
                 'tw_log_ed': 'echo 4',
             },
             'variables': {
@@ -305,10 +335,10 @@ profiles:
                 },
                 'a_log_ing': 'echo a',
             },
-            'trans': {
+            'trans_install': {
                 't_log_ing': 'echo b',
             },
-            'trans_write': {
+            'trans_update': {
                 'tw_log_ing': 'echo c',
             },
             'variables': {
@@ -352,32 +382,32 @@ profiles:
         self.assertIsNotNone(imported_cfg)
 
         # test profiles
-        self.assertIsSubset(imported_cfg.profiles,
-                            importing_cfg.profiles)
+        self.assert_is_subset(imported_cfg.profiles,
+                              importing_cfg.profiles)
 
         # test dotfiles
-        self.assertIsSubset(imported_cfg.dotfiles, importing_cfg.dotfiles)
+        self.assert_is_subset(imported_cfg.dotfiles, importing_cfg.dotfiles)
 
         # test actions
         pre_ed = post_ed = pre_ing = post_ing = {}
-        for k, v in imported_cfg.actions.items():
-            kind, _ = v
+        for k, val in imported_cfg.actions.items():
+            kind, _ = val
             if kind == 'pre':
-                pre_ed[k] = v
+                pre_ed[k] = val
             elif kind == 'post':
-                post_ed[k] = v
-        for k, v in importing_cfg.actions.items():
-            kind, _ = v
+                post_ed[k] = val
+        for k, val in importing_cfg.actions.items():
+            kind, _ = val
             if kind == 'pre':
-                pre_ing[k] = v
+                pre_ing[k] = val
             elif kind == 'post':
-                post_ing[k] = v
-        self.assertIsSubset(pre_ed, pre_ing)
-        self.assertIsSubset(post_ed, post_ing)
+                post_ing[k] = val
+        self.assert_is_subset(pre_ed, pre_ing)
+        self.assert_is_subset(post_ed, post_ing)
 
         # test transactions
-        self.assertIsSubset(imported_cfg.trans_r, importing_cfg.trans_r)
-        self.assertIsSubset(imported_cfg.trans_w, importing_cfg.trans_w)
+        self.assert_is_subset(imported_cfg.trans_install, importing_cfg.trans_install)
+        self.assert_is_subset(imported_cfg.trans_update, importing_cfg.trans_update)
 
         # test variables
         imported_vars = {
@@ -390,10 +420,10 @@ profiles:
             for k, v in importing_cfg.variables.items()
             if not k.startswith('_')
         }
-        self.assertIsSubset(imported_vars, importing_vars)
+        self.assert_is_subset(imported_vars, importing_vars)
 
         # test prodots
-        self.assertIsSubset(imported_cfg.profiles, importing_cfg.profiles)
+        self.assert_is_subset(imported_cfg.profiles, importing_cfg.profiles)
 
     def test_import_configs_override(self):
         """Test import_configs when some config keys overlap."""
@@ -474,10 +504,10 @@ profiles:
                 },
                 'a_log': 'echo 2',
             },
-            'trans': {
+            'trans_install': {
                 't_log': 'echo 3',
             },
-            'trans_write': {
+            'trans_update': {
                 'tw_log': 'echo 4',
             },
             'variables': {
@@ -512,10 +542,10 @@ profiles:
                 },
                 'a_log': 'echo a',
             },
-            'trans': {
+            'trans_install': {
                 't_log': 'echo b',
             },
-            'trans_write': {
+            'trans_update': {
                 'tw_log': 'echo c',
             },
             'variables': {
@@ -557,8 +587,8 @@ profiles:
         self.assertIsNotNone(imported_cfg)
 
         # test profiles
-        self.assertIsSubset(imported_cfg.profiles,
-                            importing_cfg.profiles)
+        self.assert_is_subset(imported_cfg.profiles,
+                              importing_cfg.profiles)
 
         # test dotfiles
         self.assertEqual(importing_cfg.dotfiles['f_vimrc'],
@@ -575,12 +605,12 @@ profiles:
 
         # test transactions
         self.assertFalse(any(
-            imported_cfg.trans_r[key] == importing_cfg.trans_r[key]
-            for key in imported_cfg.trans_r
+            imported_cfg.trans_install[key] == importing_cfg.trans_install[key]
+            for key in imported_cfg.trans_install
         ))
         self.assertFalse(any(
-            imported_cfg.trans_w[key] == importing_cfg.trans_w[key]
-            for key in imported_cfg.trans_w
+            imported_cfg.trans_update[key] == importing_cfg.trans_update[key]
+            for key in imported_cfg.trans_update
         ))
 
         # test variables
@@ -603,6 +633,7 @@ profiles:
 
 
 def main():
+    """entry point"""
     unittest.main()
 
 
